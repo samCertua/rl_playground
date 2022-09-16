@@ -4,10 +4,15 @@ from acme import types
 from acme.wrappers import gym_wrapper
 from acme.environment_loop import EnvironmentLoop
 from acme.utils.loggers import TerminalLogger, InMemoryLogger
-
 import test_env
 from q_agent import QLearningAgent
+from deep_q_agent import DeepQLearningAgent
+from monte_carlo_policy_gradient import MonteCarlo
+import coin_flip
+import test_env_addition
 # environments
+import catch
+import catch_1d
 import gym
 import dm_env
 
@@ -18,7 +23,10 @@ import numpy as np
 
 def main():
     # env = acme.wrappers.GymWrapper(gym.make('Blackjack-v1'))
-    env = test_env.TestEnv()
+    # env = test_env.TestEnv()
+    # env = test_env_addition.TestEnvAddition()
+    env = catch_1d.Catch(rows=4, columns=3)
+    # env = coin_flip.CoinFlip()
     # env = acme.wrappers.SinglePrecisionWrapper(env)
 
     # print env specs
@@ -28,10 +36,15 @@ def main():
     # print('Reward Spec:', env.reward_range)
     # make first observation
 
-    agent = QLearningAgent()
+    # agent = QLearningAgent(env_specs=acme.specs.make_environment_spec(env))
+    agent = QLearningAgent(q=(3,4,3,4,3))
+    # agent = MonteCarlo(env)
+    # agent = DeepQLearningAgent(q=(1,5))
+    # agent = acme.agents.
 
 
-    for i in range(10):
+    for i in range(50000):
+        print("EPOCH "+str(i))
         timestep = env.reset()
         agent.observe_first(timestep)
         # run an episode
@@ -40,9 +53,11 @@ def main():
             action = agent.select_action(timestep.observation)
             timestep = env.step(action)
             agent.observe(action, next_timestep=timestep)
-            if not timestep.last():
+            agent.update()
+            # if timestep.last():
                 # have the agent observe the timestep and let the agent update itself
-                agent.update()
+                # agent.update()
+    return
 
 if __name__ == '__main__':
     main()

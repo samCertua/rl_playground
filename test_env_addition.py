@@ -1,3 +1,4 @@
+import random
 
 import acme
 import dm_env
@@ -5,7 +6,7 @@ from dm_env._environment import TimeStep
 from dm_env import specs
 
 
-class TestEnv(dm_env.Environment):
+class TestEnvAddition(dm_env.Environment):
 
     def __init__(self):
         self.time = 0
@@ -20,25 +21,27 @@ class TestEnv(dm_env.Environment):
         if self._reset_next_step:
             return self.reset()
         self.time+=1
-        self.magic_number = (self.magic_number+1)%4
-        if action==self.magic_number:
+        # self.magic_number = random.randint(0,10)
+        if action==self.magic_number+self.time%10:
             reward = 1
         else:
             reward = -1
-        if self.time==29:
+        reward = 10 - abs((action - self.magic_number - (self.time%10)))
+        # print(f'Time: {self.time} Time mod 10: {self.time%10} Magic number: {self.magic_number} Action: {action} Reward: {reward}')
+        if self.time==10:
             self._reset_next_step = True
             return dm_env.termination(reward=reward, observation=self._observation())
         else:
-            return dm_env.transition(reward=reward, observation=self._observation(), discount=1/(self.time+1))
+            return dm_env.transition(reward=reward, observation=self._observation(), discount=0)
 
 
     def observation_spec(self):
-        return specs.DiscreteArray(
-            dtype=int, num_values=29, name="observation")
+        return specs.Array((2,),
+                           dtype=int, name="observation")
 
     def action_spec(self):
         return specs.DiscreteArray(
-            dtype=int, num_values=5, name="action")
+            dtype=int, num_values=20, name="action")
 
     def reset(self) -> TimeStep:
         """Resets the episode."""
@@ -49,4 +52,4 @@ class TestEnv(dm_env.Environment):
         return dm_env.restart(observation)
 
     def _observation(self):
-        return self.time
+        return self.time%10, self.magic_number
