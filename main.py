@@ -22,10 +22,10 @@ import numpy as np
 
 
 def main():
-    # env = acme.wrappers.GymWrapper(gym.make('Blackjack-v1'))
+    # env = acme.wrappers.GymWrapper(gym.make('MountainCar-v0'))
     # env = test_env.TestEnv()
-    # env = test_env_addition.TestEnvAddition()
-    env = catch_1d.Catch(rows=4, columns=3)
+    env = test_env_addition.TestEnvAddition()
+    # env = catch_1d.Catch(rows=4, columns=3)
     # env = coin_flip.CoinFlip()
     # env = acme.wrappers.SinglePrecisionWrapper(env)
 
@@ -37,8 +37,8 @@ def main():
     # make first observation
 
     # agent = QLearningAgent(env_specs=acme.specs.make_environment_spec(env))
-    agent = QLearningAgent(q=(3,4,3,4,3))
-    # agent = MonteCarlo(env)
+    # agent = QLearningAgent(q=(30,5,5))
+    agent = MonteCarlo(env)
     # agent = DeepQLearningAgent(q=(1,5))
     # agent = acme.agents.
 
@@ -57,6 +57,18 @@ def main():
             # if timestep.last():
                 # have the agent observe the timestep and let the agent update itself
                 # agent.update()
+    for i in range(1000):
+        print("EPOCH "+str(i))
+        timestep = env.reset()
+        agent.observe_first(timestep)
+        # run an episode
+        while not timestep.last():
+            # generate an action from the agent's policy and step the environment
+            action = agent.select_action(timestep.observation, deployment=True)
+            timestep = env.step(action)
+
+            agent.observe(action, next_timestep=timestep)
+            agent.update()
     return
 
 if __name__ == '__main__':

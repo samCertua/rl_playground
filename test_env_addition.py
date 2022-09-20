@@ -22,17 +22,17 @@ class TestEnvAddition(dm_env.Environment):
             return self.reset()
         self.time+=1
         # self.magic_number = random.randint(0,10)
-        if action==self.magic_number+self.time%10:
+        self.magic_number = (self.magic_number + 1) % 4
+        print(action)
+        if action == self.magic_number:
             reward = 1
         else:
             reward = -1
-        reward = 10 - abs((action - self.magic_number - (self.time%10)))
-        # print(f'Time: {self.time} Time mod 10: {self.time%10} Magic number: {self.magic_number} Action: {action} Reward: {reward}')
-        if self.time==10:
+        if self.time == 5:
             self._reset_next_step = True
             return dm_env.termination(reward=reward, observation=self._observation())
         else:
-            return dm_env.transition(reward=reward, observation=self._observation(), discount=0)
+            return dm_env.transition(reward=reward, observation=self._observation(), discount=1 / (self.time + 1))
 
 
     def observation_spec(self):
@@ -41,15 +41,15 @@ class TestEnvAddition(dm_env.Environment):
 
     def action_spec(self):
         return specs.DiscreteArray(
-            dtype=int, num_values=20, name="action")
+            dtype=int, num_values=5, name="action")
 
     def reset(self) -> TimeStep:
         """Resets the episode."""
         self._reset_next_step = False
         self.time = 0
-        self.magic_number = 1
+        self.magic_number = 4
         observation = self._observation()
         return dm_env.restart(observation)
 
     def _observation(self):
-        return self.time%10, self.magic_number
+        return self.time, self.magic_number

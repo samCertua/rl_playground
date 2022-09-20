@@ -7,12 +7,19 @@ from keras.optimizer_v2.adam import Adam
 import tensorflow_probability as tfp
 import tensorflow as tf
 
-# epsilon greedy policy
-def epsilon_greedy(q_values, epsilon):
-    if epsilon < np.random.random():
-        return np.argmax(q_values)
-    else:
-        return np.random.choice(len(q_values))
+class model(tf.keras.Model):
+  def __init__(self, out):
+    super().__init__()
+    self.d1 = tf.keras.layers.Dense(10,activation='relu')
+    # self.d2 = tf.keras.layers.Dense(50,activation='relu')
+    self.out = tf.keras.layers.Dense(out,activation='softmax')
+
+  def call(self, input_data, **kwargs):
+    x = tf.convert_to_tensor(input_data)
+    x = self.d1(x)
+    # x = self.d2(x)
+    x = self.out(x)
+    return x
 
 class MonteCarlo(acme.Actor):
 
@@ -20,7 +27,8 @@ class MonteCarlo(acme.Actor):
 
         action_space = env.action_spec()
         observation_space = env.observation_spec()
-        self.model = self.create_model(observation_space, action_space)
+        # self.model = self.create_model(observation_space, action_space)
+        self.model=model(action_space.num_values)
 
         # store timestep, action, next_timestep
         self.timestep = None
@@ -30,7 +38,7 @@ class MonteCarlo(acme.Actor):
         self.rewards = []
         self.actions = []
         self.states = []
-        self.gamma = 1
+        self.gamma = 0.99
         self.opt = tf.keras.optimizers.Adam(learning_rate=0.001)
 
 
@@ -65,13 +73,16 @@ class MonteCarlo(acme.Actor):
         loss = -log_prob * reward
         return loss
 
-    def select_action(self, observation):
+    def select_action(self, observation, deployment = False):
+        # if isinstance(observation, tuple):
+        #     observation = observation[0]
         self.states.append(observation)
-        prob = self.model.predict(np.array([observation]))
-        dist = tfp.distributions.Categorical(probs=prob, dtype=tf.float32)
-        action = dist.sample()
-        if int(action.numpy()[0]) == 11:
-            b=0
+        prob = self.model(np.array([observation]))
+        if deployment:
+            action = tf.convert_to_tensor([tf.math.argmax(prob[0])])
+        else:
+            dist = tfp.distributions.Categorical(probs=prob, dtype=tf.float32)
+            action = dist.sample()
         return int(action.numpy()[0])
 
     def observe_first(self, timestep):
@@ -88,11 +99,12 @@ class MonteCarlo(acme.Actor):
         self.rewards.append(next_timestep.reward)
         self.total_reward+=next_timestep.reward
 
-    def update(self):
+    def update(self, deployment=False):
         if self.next_timestep.last():
             # print(self.actions)
             # print(self.states)
-            self.train(self.states, self.rewards, self.actions)
+            if not deployment:
+                self.train(self.states, self.rewards, self.actions)
             print("total reward is {}".format(self.total_reward))
         else:
             self.timestep = self.next_timestep

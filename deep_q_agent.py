@@ -8,7 +8,7 @@ from keras.optimizer_v2.adam import Adam
 from collections import deque
 import random
 
-DISCOUNT = 0.99
+DISCOUNT = 0.8
 REPLAY_MEMORY_SIZE = 500  # How many last steps to keep for model training
 MIN_REPLAY_MEMORY_SIZE = 300  # Minimum number of steps in a memory to start training
 MINIBATCH_SIZE = 300  # How many steps (samples) to use for training
@@ -82,7 +82,7 @@ class DeepQLearningAgent(acme.Actor):
         observation_space = q[:-1]
         input = Input(shape=(observation_space))
         flat = Flatten()(input)
-        x = Dense(64, kernel_initializer=init)(flat)
+        x = Dense(10, kernel_initializer=init)(flat)
         out = Dense(action_space, activation="softmax")(x)
         model = Model(inputs = input, outputs = out)
         model.compile(loss="categorical_crossentropy", optimizer=Adam(lr=0.001), metrics=['accuracy'])
@@ -110,8 +110,7 @@ class DeepQLearningAgent(acme.Actor):
         self.next_timestep = next_timestep
 
     def get_qs(self, state):
-        if isinstance(state, int):
-            state = [state]
+        state = [state]
         return self.model.predict(np.array(state)).reshape(-1, self.action_space)[0]
 
     def train(self, terminal_state):
