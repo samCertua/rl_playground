@@ -21,35 +21,24 @@ class model(tf.keras.Model):
     x = self.out(x)
     return x
 
-class MonteCarlo(acme.Actor):
+class MonteCarloJourneyAgent():
 
-    def __init__(self, env: dm_env):
+    def __init__(self, action_space, observation_space):
 
-        action_space = env.action_spec()
-        observation_space = env.observation_spec()
         # self.model = self.create_model(observation_space, action_space)
-        self.model=model(action_space.num_values)
+        self.model=model(action_space)
 
         # store timestep, action, next_timestep
-        self.timestep = None
+        self.state = None
         self.action = None
-        self.next_timestep = None
+        self.next_state = None
         self.total_reward = 0
         self.rewards = []
         self.actions = []
         self.states = []
         self.gamma = 0.99
         self.opt = tf.keras.optimizers.Adam(learning_rate=0.001)
-
-
-    def create_model(self, observation_space, action_space):
-        input = Input(shape=(observation_space.shape))
-        flat = Flatten()(input)
-        x = Dense(10, activation="relu")(flat)
-        out = Dense(action_space.num_values, activation="softmax")(x)
-        model = Model(inputs=input, outputs=out)
-        # model.compile(loss="mse", optimizer=Adam(lr=0.001), metrics=['accuracy'])
-        return model
+        self.complete = False
 
     def train(self, states, rewards, actions):
         sum_reward = 0
@@ -74,8 +63,6 @@ class MonteCarlo(acme.Actor):
         return loss
 
     def select_action(self, observation, deployment = False):
-        if isinstance(observation, tuple):
-            observation = observation[0]
         self.states.append(observation)
         prob = self.model(np.array([observation]))
         if deployment:
@@ -85,26 +72,27 @@ class MonteCarlo(acme.Actor):
             action = dist.sample()
         return int(action.numpy()[0])
 
-    def observe_first(self, timestep):
-        self.timestep = timestep
+    def observe_first(self, observation):
+        self.state = observation
         self.total_reward = 0
         self.rewards = []
         self.actions = []
         self.states = []
 
-    def observe(self, action, next_timestep):
+    def observe(self, action, reward, observation, last):
         self.action = action
-        self.next_timestep = next_timestep
+        self.next_state = observation
         self.actions.append(action)
-        self.rewards.append(next_timestep.reward)
-        self.total_reward+=next_timestep.reward
+        self.rewards.append(reward)
+        self.total_reward+=reward
+        self.complete=last
 
     def update(self, deployment=False):
-        if self.next_timestep.last():
+        if self.complete:
             # print(self.actions)
             # print(self.states)
             if not deployment:
                 self.train(self.states, self.rewards, self.actions)
             print("total reward is {}".format(self.total_reward))
         else:
-            self.timestep = self.next_timestep
+            self.state = self.next_state

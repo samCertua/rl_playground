@@ -45,6 +45,7 @@ class DeepQLearningAgent(acme.Actor):
         self.target_update_counter = 0
 
         self.epsilon = 0.1
+        self.total_reward=0
 
         # store timestep, action, next_timestep
         self.timestep = None
@@ -80,9 +81,9 @@ class DeepQLearningAgent(acme.Actor):
         q = list(q)
         action_space = q[-1]
         observation_space = q[:-1]
-        input = Input(shape=(observation_space))
-        flat = Flatten()(input)
-        x = Dense(10, kernel_initializer=init)(flat)
+        input = Input(shape=((4),))
+        # flat = Flatten()(input)
+        x = Dense(10, kernel_initializer=init)(input)
         out = Dense(action_space, activation="softmax")(x)
         model = Model(inputs = input, outputs = out)
         model.compile(loss="categorical_crossentropy", optimizer=Adam(lr=0.001), metrics=['accuracy'])
@@ -93,25 +94,29 @@ class DeepQLearningAgent(acme.Actor):
         self.replay_memory.append(transition)
 
     def select_action(self, observation):
+        if isinstance(observation, tuple):
+            observation = observation[0]
         if np.random.random() > self.epsilon:
             # Get action from Q table
             action = np.argmax(self.get_qs(observation))
         else:
-            print("Epsilon pred")
+            # print("Epsilon pred")
             # Get random action
             action = np.random.randint(0, self.action_space)
         return action
 
     def observe_first(self, timestep):
+        self.total_reward = 0
         self.timestep = timestep
 
     def observe(self, action, next_timestep):
         self.action = action
         self.next_timestep = next_timestep
+        self.total_reward+=next_timestep.reward
 
     def get_qs(self, state):
-        state = [state]
-        return self.model.predict(np.array(state)).reshape(-1, self.action_space)[0]
+        # state = [state]
+        return self.model.predict(state.reshape(1,-1)).reshape(-1, self.action_space)[0]
 
     def train(self, terminal_state):
 
@@ -123,20 +128,22 @@ class DeepQLearningAgent(acme.Actor):
         minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
 
         # Get current states from minibatch, then query NN model for Q values
-        current_states = np.array([transition[0] for transition in minibatch])
+        current_states = [transition[0] for transition in minibatch]
+        current_states = np.asarray([i[0] if isinstance(i,tuple)  else i for i in current_states])
         current_qs_list = self.model.predict(current_states)
 
         # Get future states from minibatch, then query NN model for Q values
         # When using target network, query it, otherwise main network should be queried
         new_current_states = np.array([transition[3] for transition in minibatch])
-        future_qs_list = self.target_model.predict(new_current_states)
+        # future_qs_list = self.target_model.predict(new_current_states)
+        future_qs_list = self.model.predict(new_current_states)
 
         X = []
         y = []
 
         # Now we need to enumerate our batches
         for index, (current_state, action, reward, new_current_state) in enumerate(minibatch):
-
+            current_state = current_state[0] if isinstance(current_state, tuple) else current_state
             # If not a terminal state, get new q from future states, otherwise set it to 0
             # almost like with Q Learning, but we use just part of equation here
             if not self.next_timestep.last():
@@ -170,7 +177,7 @@ class DeepQLearningAgent(acme.Actor):
         state = self.timestep.observation
         _, reward, discount, next_state = self.next_timestep
         action = self.action
-        print("state: " + str(state) + " action: " + str(action) + " reward: " + str(reward))
+        # print("state: " + str(state) + " action: " + str(action) + " reward: " + str(reward))
         self.update_replay_memory((state, action, reward, next_state))
         self.train(self.timestep.last())
         # if td_error>0 and action!=1:

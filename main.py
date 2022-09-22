@@ -22,9 +22,9 @@ import numpy as np
 
 
 def main():
-    # env = acme.wrappers.GymWrapper(gym.make('MountainCar-v0'))
+    env = acme.wrappers.GymWrapper(gym.make('CartPole-v1'))
     # env = test_env.TestEnv()
-    env = test_env_addition.TestEnvAddition()
+    # env = test_env_addition.TestEnvAddition()
     # env = catch_1d.Catch(rows=4, columns=3)
     # env = coin_flip.CoinFlip()
     # env = acme.wrappers.SinglePrecisionWrapper(env)
@@ -39,7 +39,7 @@ def main():
     # agent = QLearningAgent(env_specs=acme.specs.make_environment_spec(env))
     # agent = QLearningAgent(q=(30,5,5))
     agent = MonteCarlo(env)
-    # agent = DeepQLearningAgent(q=(1,5))
+    # agent = DeepQLearningAgent(q=(4,2))
     # agent = acme.agents.
 
 
@@ -57,6 +57,7 @@ def main():
             # if timestep.last():
                 # have the agent observe the timestep and let the agent update itself
                 # agent.update()
+        print(agent.total_reward)
     for i in range(1000):
         print("EPOCH "+str(i))
         timestep = env.reset()
