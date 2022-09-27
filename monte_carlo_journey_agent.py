@@ -10,7 +10,7 @@ import tensorflow as tf
 class model(tf.keras.Model):
   def __init__(self, out):
     super().__init__()
-    self.d1 = tf.keras.layers.Dense(10,activation='relu')
+    self.d1 = tf.keras.layers.Dense(50,activation='relu')
     # self.d2 = tf.keras.layers.Dense(50,activation='relu')
     self.out = tf.keras.layers.Dense(out,activation='softmax')
 

@@ -9,7 +9,8 @@ from monte_carlo_journey_agent import MonteCarloJourneyAgent
 def main():
     old_man = OldMan()
     young_woman = YoungWoman()
-    users = [old_man, young_woman]
+    inconsistent_man = InconsistentMan()
+    users = [old_man, young_woman, inconsistent_man]
     env = Journey(random.choice(users))
     agent = RandomJourneyAgent(action_space=2, observation_space=None)
     agent = MonteCarloJourneyAgent(action_space=3, observation_space=None)
