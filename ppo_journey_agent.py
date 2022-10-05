@@ -141,18 +141,31 @@ class PPOJourneyAgent():
         self.dones.append(1-last)
 
     def update(self, deployment=False):
+        # if self.complete:
+        #     value= self.critic(np.array([self.next_state]))
+        #     self.values.append(value)
+        #     np.reshape(self.probs, (len(self.probs), self.action_space))
+        #     probs = np.stack(self.probs, axis=0)
+        #     states, actions, returns, adv = self.preprocess1(self.states, self.actions, self.rewards, self.dones,
+        #                                                      self.values, 1)
+        #     for epochs in range(10):
+        #         al, cl = self.learn(states, actions, adv, probs, returns)
+        #     print("total reward is {}".format(self.total_reward))
+        # else:
+        #     self.state = self.next_state
+
+        value= self.critic(np.array([self.next_state]))
+        v = self.values.copy()
+        v.append(value)
+        np.reshape(self.probs, (len(self.probs), self.action_space))
+        probs = np.stack(self.probs, axis=0)
+        states, actions, returns, adv = self.preprocess1(self.states, self.actions, self.rewards, self.dones,
+                                                         v, 1)
+        for epochs in range(10):
+            al, cl = self.learn(states, actions, adv, probs, returns)
         if self.complete:
-            value= self.critic(np.array([self.next_state]))
-            self.values.append(value)
-            np.reshape(self.probs, (len(self.probs), self.action_space))
-            probs = np.stack(self.probs, axis=0)
-            states, actions, returns, adv = self.preprocess1(self.states, self.actions, self.rewards, self.dones,
-                                                             self.values, 1)
-            for epochs in range(10):
-                al, cl = self.learn(states, actions, adv, probs, returns)
             print("total reward is {}".format(self.total_reward))
-        else:
-            self.state = self.next_state
+        self.state = self.next_state
 
     def preprocess1(self, states, actions, rewards, done, values, gamma):
         g = 0
