@@ -4,6 +4,7 @@ from journey_simulator import Journey
 from user_simulator import *
 from random_journey_agent_simulator import RandomJourneyAgent
 from monte_carlo_journey_agent import MonteCarloJourneyAgent
+from ppo_journey_agent import PPOJourneyAgent
 
 
 def main():
@@ -14,6 +15,7 @@ def main():
     env = Journey(random.choice(users))
     agent = RandomJourneyAgent(action_space=2, observation_space=None)
     agent = MonteCarloJourneyAgent(action_space=3, observation_space=None)
+    agent = PPOJourneyAgent(action_space=3, observation_space=None)
 
     for i in range(10000):
         print("EPOCH "+str(i) + " User: "+str(env.user.__class__))
