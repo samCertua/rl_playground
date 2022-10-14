@@ -36,7 +36,7 @@ class critic(tf.keras.Model):
     x = self.out(x)
     return x
 
-class PPOJourneyAgent():
+class PPOAgent():
 
     def __init__(self, action_space, observation_space):
 

@@ -21,7 +21,7 @@ class model(tf.keras.Model):
     x = self.out(x)
     return x
 
-class MonteCarloJourneyAgent():
+class MonteCarloAgent():
 
     def __init__(self, action_space, observation_space):
 
@@ -93,6 +93,6 @@ class MonteCarloJourneyAgent():
             # print(self.states)
             if not deployment:
                 self.train(self.states, self.rewards, self.actions)
-            print("total reward is {}".format(self.total_reward))
+            # print("total reward is {}".format(self.total_reward))
         else:
             self.state = self.next_state

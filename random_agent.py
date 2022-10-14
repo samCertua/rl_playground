@@ -1,6 +1,6 @@
 import random
 
-class RandomJourneyAgent:
+class RandomAgent:
 
     def __init__(self, action_space, observation_space):
         self.action_space = action_space
